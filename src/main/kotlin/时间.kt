@@ -2,7 +2,7 @@ package org.wiamotit1e
 
 data class 时间(val 时: Int, val 分: Int, val 秒: Int, val 小数秒: Int) {
     override fun toString(): String {
-        return String.format("%02d:%02d:%02d.%02d", 时, 分, 秒, 小数秒)
+        return String.format("%d:%02d:%02d.%02d", 时, 分, 秒, 小数秒)
     }
 }
 
