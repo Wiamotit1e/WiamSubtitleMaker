@@ -3,7 +3,7 @@ package org.wiamotit1e
 import java.nio.file.Path
 import java.nio.file.Files
 
-fun 字幕文件处理(文件: Path): Iterator<字幕事件> {
+fun 获取字幕事件(文件: Path): Iterator<字幕事件> {
     val lines = Files.readAllLines(文件)
     
     return lines.asSequence()
