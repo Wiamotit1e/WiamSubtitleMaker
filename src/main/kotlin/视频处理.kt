@@ -21,12 +21,3 @@ fun 按时间截取视频(视频路径: Path, 输出目录: Path, 开始时间: 
         .start()
         .waitFor()
 }
-
-fun main() {
-    按时间截取视频(
-        Path.of("D:\\Wiam\\WiamVideoMaker\\input\\Sibling Stories! WE ROBBED A LIBRARY AND GOT AWAY WITH IT [RfipDJoovM4].mp4"),
-        Path.of("D:\\Wiam\\WiamVideoMaker\\output\\"),
-        "0:00:04.90".时间(),
-        "0:00:06.60".时间()
-    )
-}

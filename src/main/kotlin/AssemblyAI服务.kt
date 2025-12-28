@@ -116,15 +116,3 @@ class AssemblyAI服务(val 密钥: String) {
             }
     }
 }
-
-suspend fun main() {
-    val 密钥 = "b79b431024c546788117f7ca64580bbd"
-    val 服务 = AssemblyAI服务(密钥)
-    val 文件 = Path.of("D:\\Wiam\\WiamVideoMaker\\input\\Sibling Stories! WE ROBBED A LIBRARY AND GOT AWAY WITH IT [RfipDJoovM4].mp4")
-//    val url = 服务.上传文件(文件)
-//    println(url)
-//    val id = 服务.转文字(url)
-//    println(服务.获取结果(id))
-//    服务.在结果中获取句子列表("3b6ef95d-154e-43f9-aff9-9f5b84401a4d").forEach { println(it) }
-    服务.在结果中获取句子作为字幕事件列表("3b6ef95d-154e-43f9-aff9-9f5b84401a4d", "ENSub1").forEach { println(it) }
-}
