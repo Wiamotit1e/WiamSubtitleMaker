@@ -1,7 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '2.0.21'
     id 'application'
-
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'org.wiamotit1e'
@@ -9,7 +9,6 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
-
 }
 
 dependencies {
@@ -31,5 +30,11 @@ kotlin {
 }
 
 application {
-    mainClass = 'org.wiamotit1e.MainKt'
+    mainClass = 'org.wiamotit1e.主Kt'
+}
+
+distributions {
+    main {
+        distributionBaseName = project.name
+    }
 }

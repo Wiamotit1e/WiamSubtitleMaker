@@ -3,7 +3,7 @@ package org.wiamotit1e
 import java.nio.file.Path
 import kotlinx.coroutines.runBlocking
 
-fun main(arg: Array<String>) {
+fun main() {
     println("欢迎使用视频字幕生成工具！")
     println("=========================")
     
