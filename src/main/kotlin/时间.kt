@@ -15,6 +15,17 @@ fun String.时间(): 时间 {
     return 时间(时, 分, 秒, 小数秒)
 }
 
+fun Int.毫秒到时间(): 时间 {
+    val 总毫秒 = this
+    val 时 = 总毫秒 / 1000 / 60 / 60
+    val 分 = (总毫秒 / 1000 / 60 % 60).toInt()
+    val 秒 = (总毫秒 / 1000 % 60).toInt()
+    val 毫秒 = (总毫秒 % 1000).toInt()
+    val 小数秒 = 毫秒 / 10
+    return 时间(时, 分, 秒, 小数秒)
+}
+
 fun main() {
     println("1:02:03.04".时间())
+    println(68140.毫秒到时间())
 }

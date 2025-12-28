@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -88,7 +89,7 @@ class AssemblyAI服务(val 密钥: String) {
         }
     }
     
-    suspend fun 在结果中获取句子文本列表(id: String): List<String> {
+    suspend fun 在结果中获取句子列表(id: String): List<String> {
         val 回复 = client.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
             headers { append(HttpHeaders.Authorization, 密钥.trim()) }
         }
@@ -96,6 +97,22 @@ class AssemblyAI服务(val 密钥: String) {
             .jsonArray
             .map {
                 it.jsonObject["text"]!!.jsonPrimitive.content
+            }
+    }
+    
+    suspend fun 在结果中获取句子作为字幕事件列表(id: String, 样式: String): List<字幕事件> {
+        val 回复 = client.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
+            headers { append(HttpHeaders.Authorization, 密钥.trim()) }
+        }
+        return Json.decodeFromString<JsonObject>(回复.bodyAsText())["sentences"]!!
+            .jsonArray
+            .map {
+                字幕事件(
+                    文本 = it.jsonObject["text"]!!.jsonPrimitive.content,
+                    开始时间 = it.jsonObject["start"]!!.jsonPrimitive.int.毫秒到时间(),
+                    结束时间 = it.jsonObject["end"]!!.jsonPrimitive.int.毫秒到时间(),
+                    样式 = 样式
+                )
             }
     }
 }
@@ -108,5 +125,6 @@ suspend fun main() {
 //    println(url)
 //    val id = 服务.转文字(url)
 //    println(服务.获取结果(id))
-    服务.在结果中获取句子文本列表("3b6ef95d-154e-43f9-aff9-9f5b84401a4d").forEach { println(it) }
+//    服务.在结果中获取句子列表("3b6ef95d-154e-43f9-aff9-9f5b84401a4d").forEach { println(it) }
+    服务.在结果中获取句子作为字幕事件列表("3b6ef95d-154e-43f9-aff9-9f5b84401a4d", "ENSub1").forEach { println(it) }
 }
