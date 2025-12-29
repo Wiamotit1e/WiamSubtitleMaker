@@ -27,7 +27,7 @@ import java.nio.file.Path
 
 class AssemblyAI服务(val 密钥: String) {
     
-    val client = HttpClient(CIO) {
+    val 客户端 = HttpClient(CIO) {
         install(Logging) {
             level = LogLevel.HEADERS
         }
@@ -42,7 +42,7 @@ class AssemblyAI服务(val 密钥: String) {
     }
     
     fun 上传文件(文件: Path): String = runBlocking {
-        val 回复 = client.post("https://api.assemblyai.com/v2/upload") {
+        val 回复 = 客户端.post("https://api.assemblyai.com/v2/upload") {
             headers {
                 append(HttpHeaders.Authorization, 密钥.trim())
                 append(HttpHeaders.ContentType, "application/octet-stream")
@@ -53,8 +53,8 @@ class AssemblyAI服务(val 密钥: String) {
         
     }
     
-    fun 转文字(url : String): String = runBlocking {
-        val 回复 = client.post("https://api.assemblyai.com/v2/transcript") {
+    fun 使用通用模型转文字(url : String): String = runBlocking {
+        val 回复 = 客户端.post("https://api.assemblyai.com/v2/transcript") {
             headers {
                 append(HttpHeaders.Authorization, 密钥.trim())
                 append(HttpHeaders.ContentType, "application/json")
@@ -62,9 +62,23 @@ class AssemblyAI服务(val 密钥: String) {
             setBody(
                 buildJsonObject {
                     put("audio_url", JsonPrimitive(url))
-                    put("speech_models", buildJsonArray {
-                        add(JsonPrimitive("universal"))
-                    })
+                    put("speech_model", JsonPrimitive("universal"))
+                }
+            )
+        }.bodyAsText()
+        Json.decodeFromString<JsonObject>(回复)["id"]!!.jsonPrimitive.content
+    }
+    
+    fun 使用最好模型转文字(url : String): String = runBlocking {
+        val 回复 = 客户端.post("https://api.assemblyai.com/v2/transcript") {
+            headers {
+                append(HttpHeaders.Authorization, 密钥.trim())
+                append(HttpHeaders.ContentType, "application/json")
+            }
+            setBody(
+                buildJsonObject {
+                    put("audio_url", JsonPrimitive(url))
+                    put("speech_model", JsonPrimitive("best"))
                 }
             )
         }.bodyAsText()
@@ -72,7 +86,7 @@ class AssemblyAI服务(val 密钥: String) {
     }
     suspend fun 获取结果(id: String): String {
         while (true) {
-            val 回复 = client.get("https://api.assemblyai.com/v2/transcript/$id") {
+            val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id") {
                 headers { append(HttpHeaders.Authorization, 密钥.trim()) }
             }
             val 结果 = Json.decodeFromString<JsonObject>(回复.bodyAsText())
@@ -90,7 +104,7 @@ class AssemblyAI服务(val 密钥: String) {
     }
     
     suspend fun 在结果中获取句子列表(id: String): List<String> {
-        val 回复 = client.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
+        val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
             headers { append(HttpHeaders.Authorization, 密钥.trim()) }
         }
         return Json.decodeFromString<JsonObject>(回复.bodyAsText())["sentences"]!!
@@ -101,7 +115,7 @@ class AssemblyAI服务(val 密钥: String) {
     }
     
     suspend fun 在结果中获取句子作为字幕事件列表(id: String, 样式: String): List<字幕事件> {
-        val 回复 = client.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
+        val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
             headers { append(HttpHeaders.Authorization, 密钥.trim()) }
         }
         return Json.decodeFromString<JsonObject>(回复.bodyAsText())["sentences"]!!

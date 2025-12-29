@@ -52,14 +52,35 @@ fun main() {
                 }
             }
             "2" -> {
-                println("\n请输入需要处理的 URL：")
+                print("\n请输入需要处理的 URL：")
                 val 当前上传URL = readlnOrNull()
                 
-                println("正在请求转文字服务...")
+                if (当前上传URL.isNullOrEmpty()) {
+                    println("错误: URL不能为空")
+                    continue
+                }
+                
+                println("请选择模型：")
+                println("1. 通用模型")
+                println("2. 最好模型")
+                print("\n请输入模型选择 (1-2): ")
+                val 模型选择 = readlnOrNull()
+                
                 runBlocking {
                     try {
-                        
-                        println("转文字任务已创建，任务ID: ${服务.转文字(当前上传URL!!)}")
+                        when (模型选择) {
+                            "1" -> {
+                                println("正在使用通用模型转文字...")
+                                println("转文字任务已创建，任务ID: ${服务.使用通用模型转文字(当前上传URL)}")
+                            }
+                            "2" -> {
+                                println("正在使用最好模型转文字...")
+                                println("转文字任务已创建，任务ID: ${服务.使用最好模型转文字(当前上传URL)}")
+                            }
+                            else -> {
+                                println("无效模型选择，请重新选择")
+                            }
+                        }
                     } catch (e: Exception) {
                         println("转文字请求失败: ${e.message}")
                     }
