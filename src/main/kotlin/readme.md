@@ -1,8 +1,8 @@
-# WiamVideoMaker - 自动字幕生成器
+# WiamSubtitleMaker - 自动字幕生成器
 
 ## 简介
 
-WiamVideoMaker 是一个自动字幕生成工具，旨在帮助我自己快速为视频生成字幕。
+WiamSubtitleMaker 是一个自动字幕生成工具，旨在帮助我自己快速为视频生成字幕。
 
 ## 功能特性
 
@@ -18,7 +18,7 @@ WiamVideoMaker 是一个自动字幕生成工具，旨在帮助我自己快速�
 ## 安装与使用
 
 1. 确保已安装 Java
-2. 用这玩意运行 ```java -jar WiamVideoMaker-1.0-SNAPSHOT.jar```
+2. 用这玩意运行 ```java -jar WiamSubtitleMaker-1.0-SNAPSHOT.jar```
 3. 按提示操作就行
 4. 选择 1 上传音视频文件 → 得到 upload_url
 5. 选择 2 使用该 url 提交转录任务 → 得到 task_id
