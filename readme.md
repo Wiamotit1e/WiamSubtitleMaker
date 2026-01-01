@@ -84,6 +84,8 @@ WiamSubtitleMaker/
 ├── src/main/kotlin/          # 源代码目录
 │   ├── AssemblyAI服务.kt     # AssemblyAI API 服务封装
 │   ├── JavaFX应用.kt         # 主应用界面
+│   ├── UI组件管理器.kt       # UI组件管理器
+│   ├── 业务逻辑处理器.kt     # 业务逻辑处理器
 │   ├── 主.kt                 # 应用入口
 │   ├── 句子.kt               # 句子数据结构
 │   ├── 字幕事件.kt           # 字幕事件数据结构
