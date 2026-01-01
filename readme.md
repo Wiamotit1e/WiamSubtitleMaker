@@ -1,6 +1,5 @@
 # WiamSubtitleMaker - 智能字幕生成器
 
-<div align="center">
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.8+-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![JavaFX](https://img.shields.io/badge/JavaFX-17+-007396?logo=java&logoColor=white)](https://openjfx.io/)
@@ -8,7 +7,6 @@
 
 **一款基于 AssemblyAI API 的智能字幕生成工具，支持语音识别、字幕编辑**
 
-</div>
 
 ## 📋 项目简介
 
