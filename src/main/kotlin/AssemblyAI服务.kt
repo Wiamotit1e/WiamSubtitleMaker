@@ -12,6 +12,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.util.Platform
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -19,6 +20,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -27,7 +29,7 @@ import java.nio.file.Path
 
 class AssemblyAI服务(val 密钥: String) {
     
-    val 客户端 = HttpClient(CIO) {
+    private val 客户端 = HttpClient(CIO) {
         install(Logging) {
             level = LogLevel.HEADERS
         }
@@ -41,7 +43,7 @@ class AssemblyAI服务(val 密钥: String) {
         }
     }
     
-    fun 上传文件(文件: Path): String = runBlocking {
+    suspend fun 上传文件(文件: Path): String {
         val 回复 = 客户端.post("https://api.assemblyai.com/v2/upload") {
             headers {
                 append(HttpHeaders.Authorization, 密钥.trim())
@@ -49,11 +51,10 @@ class AssemblyAI服务(val 密钥: String) {
             }
             setBody(文件.toFile().readBytes())
         }.bodyAsText()
-        Json.decodeFromString<JsonObject>(回复)["upload_url"]!!.jsonPrimitive.content
-        
+        return Json.decodeFromString<JsonObject>(回复)["upload_url"]!!.jsonPrimitive.content
     }
     
-    fun 使用通用模型转文字(url : String): String = runBlocking {
+    suspend fun 使用通用模型转文字(url: String): String {
         val 回复 = 客户端.post("https://api.assemblyai.com/v2/transcript") {
             headers {
                 append(HttpHeaders.Authorization, 密钥.trim())
@@ -66,10 +67,10 @@ class AssemblyAI服务(val 密钥: String) {
                 }
             )
         }.bodyAsText()
-        Json.decodeFromString<JsonObject>(回复)["id"]!!.jsonPrimitive.content
+        return Json.decodeFromString<JsonObject>(回复)["id"]!!.jsonPrimitive.content
     }
     
-    fun 使用最好模型转文字(url : String): String = runBlocking {
+    suspend fun 使用最好模型转文字(url : String): String {
         val 回复 = 客户端.post("https://api.assemblyai.com/v2/transcript") {
             headers {
                 append(HttpHeaders.Authorization, 密钥.trim())
@@ -82,14 +83,25 @@ class AssemblyAI服务(val 密钥: String) {
                 }
             )
         }.bodyAsText()
-        Json.decodeFromString<JsonObject>(回复)["id"]!!.jsonPrimitive.content
+        return Json.decodeFromString<JsonObject>(回复)["id"]!!.jsonPrimitive.content
+    }
+    
+    suspend fun 获取转换(): List<String> {
+        val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript") {
+            headers {
+                append(HttpHeaders.Authorization, 密钥.trim())
+            }
+        }.bodyAsText()
+        return Json.decodeFromString<JsonObject>(回复)["transcripts"]!!.jsonArray.map { 
+            it.jsonObject["id"]!!.jsonPrimitive.content
+        }
     }
     suspend fun 获取结果(id: String): String {
         while (true) {
             val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id") {
                 headers { append(HttpHeaders.Authorization, 密钥.trim()) }
-            }
-            val 结果 = Json.decodeFromString<JsonObject>(回复.bodyAsText())
+            }.bodyAsText()
+            val 结果 = Json.decodeFromString<JsonObject>(回复)
             val status = 结果["status"]!!.jsonPrimitive.content
             
             when (status) {
@@ -103,22 +115,35 @@ class AssemblyAI服务(val 密钥: String) {
         }
     }
     
-    suspend fun 在结果中获取句子列表(id: String): List<String> {
+    suspend fun 获取转录片段(id: String): List<转录片段> {
+        val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id") {
+            headers { append(HttpHeaders.Authorization, 密钥.trim()) }
+        }.bodyAsText()
+        return Json.decodeFromString<JsonObject>(回复)["words"]!!
+            .jsonArray.map { Json.decodeFromString<转录片段>(it.jsonObject.toString()) }
+    }
+    
+    suspend fun 在结果中获取句子列表(id: String): List<句子> {
         val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
             headers { append(HttpHeaders.Authorization, 密钥.trim()) }
-        }
-        return Json.decodeFromString<JsonObject>(回复.bodyAsText())["sentences"]!!
+        }.bodyAsText()
+        return Json.decodeFromString<JsonObject>(回复)["sentences"]!!
             .jsonArray
             .map {
-                it.jsonObject["text"]!!.jsonPrimitive.content
+                句子(
+                    it.jsonObject["text"]!!.jsonPrimitive.content,
+                    it.jsonObject["words"]!!.jsonArray.map {
+                        Json.decodeFromString<转录片段>(it.jsonObject.toString())
+                    }
+                )
             }
     }
     
     suspend fun 在结果中获取句子作为字幕事件列表(id: String, 样式: String): List<字幕事件> {
         val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
             headers { append(HttpHeaders.Authorization, 密钥.trim()) }
-        }
-        return Json.decodeFromString<JsonObject>(回复.bodyAsText())["sentences"]!!
+        }.bodyAsText()
+        return Json.decodeFromString<JsonObject>(回复)["sentences"]!!
             .jsonArray
             .map {
                 字幕事件(
@@ -129,4 +154,12 @@ class AssemblyAI服务(val 密钥: String) {
                 )
             }
     }
+}
+
+
+suspend fun main() {
+    val 配置 = 获取配置()
+    val 服务 = AssemblyAI服务(配置.密钥)
+    val id = 服务.获取转换()[1]
+    服务.在结果中获取句子列表(id).forEach { println(it) }
 }
