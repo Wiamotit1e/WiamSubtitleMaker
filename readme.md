@@ -31,21 +31,7 @@ WiamSubtitleMaker 是一款功能强大的智能字幕制作工具，利用 Asse
 
 ### 安装步骤
 
-1. **克隆项目**
-   ```bash
-   git clone https://github.com/Wiamotit1e/WiamSubtitleMaker.git
-   cd WiamSubtitleMaker
-   ```
-
-2. **构建项目**
-   ```bash
-   ./gradlew build
-   ```
-
-3. **启动应用**
-   ```bash
-   ./gradlew run
-   ```
+- 下载下来点两下就出来了
 
 ### 配置 API 密钥
 
