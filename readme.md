@@ -6,7 +6,7 @@
 
 **一款基于 AssemblyAI API 的智能字幕生成工具，支持语音识别、字幕编辑** / **An intelligent subtitle generation tool based on AssemblyAI API, supporting speech recognition and subtitle editing**
 
-[English Version / 英文版](./readme_en)
+[English Version / 英文版](./readme_en.md)
 
 ![主界面演示](ui.png)
 
