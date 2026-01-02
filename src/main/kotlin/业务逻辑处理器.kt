@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.text.substringAfter
 
 /**
  * 业务逻辑处理器 - 处理所有业务逻辑，与UI组件解耦
@@ -82,10 +83,10 @@ class 业务逻辑处理器(
             保存为字幕事件()
         }
         
-        // 初始化转录片段表格
+        初始化句子列表()
+        
         初始化转录片段表格()
         
-        // 监听句子列表选择变化
         监听句子列表选择变化()
     }
 
@@ -355,13 +356,11 @@ class 业务逻辑处理器(
     }
 
     private fun 保存为字幕事件() {
-        // 检查是否有句子数据
         if (句子转录片段映射.isEmpty()) {
             显示警告("没有句子数据", "请先获取句子列表数据")
             return
         }
         
-        // 创建所有字幕事件
         val 字幕事件列表 = mutableListOf<String>()
         for (i in 0 until 句子转录片段映射.size) {
             val 当前句子转录片段 = 句子转录片段映射[i]
@@ -384,6 +383,19 @@ class 业务逻辑处理器(
                 显示信息("成功", "字幕事件已保存到 ${保存文件.absolutePath}")
             } catch (e: Exception) {
                 显示错误("保存失败: ${e.message}")
+            }
+        }
+    }
+    
+    private fun 初始化句子列表() {
+        ui组件管理器.句子列表.cellFactory = Callback {
+            object : ListCell<String>() {
+                override fun updateItem(item: String?, empty: Boolean) {
+                    super.updateItem(item, empty)
+                    text = if (empty) null else item
+                    if(text.isNullOrEmpty()) return
+                    style = if(text.substringAfter("文本: ").length > 80) "-fx-text-fill: red;" else ""
+                }
             }
         }
     }
