@@ -31,6 +31,7 @@ dependencies {
     implementation "org.openjfx:javafx-controls:$javafxVersion:win"
     implementation "org.openjfx:javafx-graphics:$javafxVersion:win"
     implementation "org.openjfx:javafx-fxml:$javafxVersion:win"
+    implementation "org.openjfx:javafx-media:$javafxVersion:win"
     
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
 }

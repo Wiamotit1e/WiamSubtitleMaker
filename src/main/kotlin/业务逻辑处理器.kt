@@ -74,6 +74,10 @@ class 业务逻辑处理器(
             分割句子()
         }
         
+        ui组件管理器.播放选中句子按钮.setOnAction {
+            播放选中句子()
+        }
+        
         ui组件管理器.保存为字幕事件按钮.setOnAction {
             保存为字幕事件()
         }
@@ -277,9 +281,6 @@ class 业务逻辑处理器(
         // 更新转录片段表格
         val 转录片段数据 = 句子转录片段映射.flatMap { it }.toMutableList()
         ui组件管理器.转录片段表格.items = FXCollections.observableArrayList(转录片段数据)
-        
-        // 刷新表格以更新颜色
-        ui组件管理器.转录片段表格.refresh()
     }
 
     private fun 分割句子() {
@@ -333,9 +334,19 @@ class 业务逻辑处理器(
         // 更新转录片段表格
         val 转录片段数据 = 句子转录片段映射.flatMap { it }.toMutableList()
         ui组件管理器.转录片段表格.items = FXCollections.observableArrayList(转录片段数据)
-        
-        // 刷新表格以更新颜色
-        ui组件管理器.转录片段表格.refresh()
+    }
+    
+    private fun 播放选中句子() {
+        val 选中句子索引 = ui组件管理器.句子列表.selectionModel.selectedIndex
+        if (选中句子索引 == -1) {
+            显示警告("未选择句子", "请先选择一个句子")
+            return
+        }
+        播放器.play(
+            路径 = Path.of(ui组件管理器.文件路径文本框.text),
+            开始毫秒数 = 句子转录片段映射[选中句子索引].first().start,
+            结束毫秒数 = 句子转录片段映射[选中句子索引].last().end
+        )
     }
 
     private fun 保存为字幕事件() {
@@ -349,18 +360,10 @@ class 业务逻辑处理器(
         val 字幕事件列表 = mutableListOf<String>()
         for (i in 0 until 句子转录片段映射.size) {
             val 当前句子转录片段 = 句子转录片段映射[i]
-            if (当前句子转录片段.isNotEmpty()) {
-                // 获取当前句子的文本
-                val 句子文本 = ui组件管理器.句子列表.items[i]
-                val 纯文本 = 句子文本.substringAfter("文本: ")
-                
-                
-                字幕事件列表.add(
-                    句子(text = 纯文本, words = 当前句子转录片段)
-                        .字幕事件()
-                        .toString()
-                )
-            }
+            if (当前句子转录片段.isEmpty()) continue
+            val 句子文本 = ui组件管理器.句子列表.items[i]
+            val 纯文本 = 句子文本.substringAfter("文本: ")
+            字幕事件列表.add(句子(text = 纯文本, words = 当前句子转录片段).字幕事件().toString())
         }
         
         val 文件选择器 = FileChooser().apply {
@@ -447,19 +450,15 @@ class 业务逻辑处理器(
     private fun List<句子>.更新UI() {
         ui组件管理器.句子列表.items.clear()
         ui组件管理器.转录片段表格.items.clear()
-        句子转录片段映射.clear() // 清空映射关系
+        句子转录片段映射.clear()
         
         this.forEach { 句子 ->
             ui组件管理器.句子列表.items.add("文本: ${句子.text}")
-            句子转录片段映射.add(句子.words) // 存储映射关系
+            句子转录片段映射.add(句子.words)
+            
+            val 转录片段数据 = this.flatMap { it.words }.toMutableList()
+            ui组件管理器.转录片段表格.items = FXCollections.observableArrayList(转录片段数据)
         }
-        
-        // 设置转录片段表格数据
-        val 转录片段数据 = this.flatMap { 句子 -> 句子.words }.toMutableList()
-        ui组件管理器.转录片段表格.items = FXCollections.observableArrayList(转录片段数据)
-        
-        // 刷新表格以更新颜色
-        ui组件管理器.转录片段表格.refresh()
     }
 
     private fun 显示错误(消息: String) {

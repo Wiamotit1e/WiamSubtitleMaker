@@ -82,6 +82,10 @@ class UI组件管理器 {
         text = "分割句子"
     }
     
+    val 播放选中句子按钮: Button = Button("播放选中句子").apply {
+        text = "播放选中句子"
+    }
+    
     val 保存为字幕事件按钮: Button = Button("保存为字幕事件").apply {
         text = "保存为字幕事件"
     }
@@ -138,7 +142,7 @@ class UI组件管理器 {
             )
         }
         
-        val 句子操作按钮框 = HBox(10.0, 合成句子按钮, 分割句子按钮)
+        val 句子操作按钮框 = HBox(10.0, 合成句子按钮, 分割句子按钮, 播放选中句子按钮)
         
         return VBox(
             Label("转换查询:"),
