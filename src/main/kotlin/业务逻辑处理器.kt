@@ -337,6 +337,11 @@ class 业务逻辑处理器(
     }
     
     private fun 播放选中句子() {
+        if (ui组件管理器.文件路径文本框.text.isEmpty()) {
+            显示警告("未选择文件", "请先选择一个文件")
+            return
+        }
+        
         val 选中句子索引 = ui组件管理器.句子列表.selectionModel.selectedIndex
         if (选中句子索引 == -1) {
             显示警告("未选择句子", "请先选择一个句子")
