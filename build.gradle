@@ -44,7 +44,7 @@ kotlin {
 }
 
 application {
-    mainClass = 'org.wiamotit1e.主Kt'
+    mainClass = 'org.wiamotit1e.MainKt'
 }
 
 distributions {

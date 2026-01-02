@@ -21,9 +21,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.nio.file.Path
 
-class AssemblyAI服务(val 密钥: String) {
+class AssemblyAIService(val apiKey: String) {
     
-    private val 客户端 = HttpClient(CIO) {
+    private val client = HttpClient(CIO) {
         install(Logging) {
             level = LogLevel.HEADERS
         }
@@ -37,21 +37,21 @@ class AssemblyAI服务(val 密钥: String) {
         }
     }
     
-    suspend fun 上传文件(文件: Path): String {
-        val 回复 = 客户端.post("https://api.assemblyai.com/v2/upload") {
+    suspend fun updateFile(filePath: Path): String {
+        val response = client.post("https://api.assemblyai.com/v2/upload") {
             headers {
-                append(HttpHeaders.Authorization, 密钥.trim())
+                append(HttpHeaders.Authorization, apiKey.trim())
                 append(HttpHeaders.ContentType, "application/octet-stream")
             }
-            setBody(文件.toFile().readBytes())
+            setBody(filePath.toFile().readBytes())
         }.bodyAsText()
-        return Json.decodeFromString<JsonObject>(回复)["upload_url"]!!.jsonPrimitive.content
+        return Json.decodeFromString<JsonObject>(response)["upload_url"]!!.jsonPrimitive.content
     }
     
-    suspend fun 使用通用模型转文字(url: String): String {
-        val 回复 = 客户端.post("https://api.assemblyai.com/v2/transcript") {
+    suspend fun transcribeWithGeneralModel(url: String): String {
+        val response = client.post("https://api.assemblyai.com/v2/transcript") {
             headers {
-                append(HttpHeaders.Authorization, 密钥.trim())
+                append(HttpHeaders.Authorization, apiKey.trim())
                 append(HttpHeaders.ContentType, "application/json")
             }
             setBody(
@@ -61,31 +61,31 @@ class AssemblyAI服务(val 密钥: String) {
                 }
             )
         }.bodyAsText()
-        return Json.decodeFromString<JsonObject>(回复)["id"]!!.jsonPrimitive.content
+        return Json.decodeFromString<JsonObject>(response)["id"]!!.jsonPrimitive.content
     }
     
-    suspend fun 获取转换(): List<String> {
-        val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript") {
+    suspend fun queryTranscription(): List<String> {
+        val response = client.get("https://api.assemblyai.com/v2/transcript") {
             headers {
-                append(HttpHeaders.Authorization, 密钥.trim())
+                append(HttpHeaders.Authorization, apiKey.trim())
             }
         }.bodyAsText()
-        return Json.decodeFromString<JsonObject>(回复)["transcripts"]!!.jsonArray.map { 
+        return Json.decodeFromString<JsonObject>(response)["transcripts"]!!.jsonArray.map { 
             it.jsonObject["id"]!!.jsonPrimitive.content
         }
     }
     
-    suspend fun 在结果中获取句子列表(id: String): List<句子> {
-        val 回复 = 客户端.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
-            headers { append(HttpHeaders.Authorization, 密钥.trim()) }
+    suspend fun getSentencesFromResult(id: String): List<Sentence> {
+        val response = client.get("https://api.assemblyai.com/v2/transcript/$id/sentences") {
+            headers { append(HttpHeaders.Authorization, apiKey.trim()) }
         }.bodyAsText()
-        return Json.decodeFromString<JsonObject>(回复)["sentences"]!!
+        return Json.decodeFromString<JsonObject>(response)["sentences"]!!
             .jsonArray
             .map {
-                句子(
+                Sentence(
                     it.jsonObject["text"]!!.jsonPrimitive.content,
                     it.jsonObject["words"]!!.jsonArray.map {
-                        Json.decodeFromString<转录片段>(it.jsonObject.toString())
+                        Json.decodeFromString<TranscriptSegment>(it.jsonObject.toString())
                     }
                 )
             }
@@ -94,8 +94,8 @@ class AssemblyAI服务(val 密钥: String) {
 
 
 suspend fun main() {
-    val 配置 = 获取配置()
-    val 服务 = AssemblyAI服务(配置.密钥)
-    val id = 服务.获取转换()[1]
-    服务.在结果中获取句子列表(id).forEach { println(it) }
+    val config = getConfig()
+    val service = AssemblyAIService(config.apiKey)
+    val id = service.queryTranscription()[1]
+    service.getSentencesFromResult(id).forEach { println(it) }
 }

@@ -6,18 +6,18 @@ import javafx.util.Duration.millis
 import java.nio.file.Path
 
 
-object 播放器 {
+object Player {
     private var currentPlayer: MediaPlayer? = null
     
-    fun play(路径: Path, 开始毫秒数: Int, 结束毫秒数: Int) {
+    fun play(pathToPlay: Path, startMilliseconds: Int, endMilliseconds: Int) {
         stop()
         try {
-            val 媒体 = Media(路径.toUri().toString())
-            val 播放器 = MediaPlayer(媒体)
-            播放器.startTime = millis(开始毫秒数.toDouble())
-            播放器.stopTime = millis(结束毫秒数.toDouble())
-            播放器.play()
-            currentPlayer = 播放器
+            val media = Media(pathToPlay.toUri().toString())
+            val player = MediaPlayer(media)
+            player.startTime = millis(startMilliseconds.toDouble())
+            player.stopTime = millis(endMilliseconds.toDouble())
+            player.play()
+            currentPlayer = player
         } catch (e: Exception) {
             e.printStackTrace()
         }
