@@ -1,9 +1,11 @@
-package org.wiamotit1e
+package org.wiamotit1e.user_interaction.old
 
 import javafx.application.Application
+import javafx.geometry.Insets
 import javafx.scene.Scene
-import javafx.scene.layout.*
+import javafx.scene.layout.VBox
 import javafx.stage.Stage
+import org.wiamotit1e.user_interaction.old.UIComponentManager
 
 class JavaFXApplication : Application() {
     
@@ -24,7 +26,7 @@ class JavaFXApplication : Application() {
             uiComponentManager.createTranscribeBox(),
             uiComponentManager.createSearchBox()
         ).apply {
-            padding = javafx.geometry.Insets(20.0)
+            padding = Insets(20.0)
         }
         
         currentStage.apply {

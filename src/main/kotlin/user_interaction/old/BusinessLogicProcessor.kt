@@ -1,18 +1,28 @@
-package org.wiamotit1e
+package org.wiamotit1e.user_interaction.old
 
 import javafx.collections.FXCollections
-import javafx.scene.control.*
+import javafx.scene.control.Alert
+import javafx.scene.control.TableCell
+import javafx.scene.control.TableColumn
+import javafx.scene.control.cell.PropertyValueFactory
 import javafx.stage.FileChooser
 import javafx.stage.Stage
-import javafx.scene.control.cell.PropertyValueFactory
 import javafx.util.Callback
-import javafx.scene.control.TableCell
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.wiamotit1e.AssemblyAIService
+import org.wiamotit1e.Config
+import org.wiamotit1e.Player
+import org.wiamotit1e.Sentence
+import org.wiamotit1e.TranscriptSegment
+import org.wiamotit1e.getConfig
+import org.wiamotit1e.saveConfig
+import org.wiamotit1e.toSubtitleEvent
+import org.wiamotit1e.user_interaction.old.ListViewMaker
+import org.wiamotit1e.user_interaction.old.UIComponentManager
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.text.substringAfter
 
 /**
  * 业务逻辑处理器 - 处理所有业务逻辑，与UI组件解耦
@@ -22,7 +32,26 @@ class BusinessLogicProcessor(
     private val currentStage: Stage
 ) {
     private var config: Config = getConfig()
-    private val sentenceToTranscriptSegmentMap = mutableListOf<List<TranscriptSegment>>()
+    private val sentences = mutableListOf<Sentence>()
+    
+    private val sentencesMaker  = ListViewMaker<Sentence>(
+        listView = uiComponentManager.sentenceListView,
+        content = { it.text },
+        style = { if (it.text.length > 80) "-fx-text-fill: red;" else "" },
+        onSelectionChanged = {
+            if (it == null) return@ListViewMaker
+            val sentenceIndex = uiComponentManager.sentenceListView.items.indexOf(it)
+            if (sentenceIndex < 0 || sentenceIndex >= sentences.size) return@ListViewMaker
+            val transcriptSegmentsOfSentence = sentences[sentenceIndex]
+            if (transcriptSegmentsOfSentence.words.isEmpty()) return@ListViewMaker
+            val firstTranscriptSegment = transcriptSegmentsOfSentence.words[0]
+            val transcriptSegmentIndex =
+                uiComponentManager.transcriptSegmentTableView.items.indexOf(firstTranscriptSegment)
+            if (transcriptSegmentIndex < 0) return@ListViewMaker
+            uiComponentManager.transcriptSegmentTableView.selectionModel.select(transcriptSegmentIndex)
+            uiComponentManager.transcriptSegmentTableView.scrollTo(transcriptSegmentIndex)
+            uiComponentManager.transcriptSegmentTableView.refresh()
+        })
     
     fun initializeEventManager() {
         // 配置相关事件
@@ -82,11 +111,8 @@ class BusinessLogicProcessor(
             saveAsSubtitleEvent()
         }
         
-        initializeSentenceListView()
         
         initializeTranscriptSegmentTable()
-        
-        listenSentenceListSelectionChange()
     }
 
     private fun showApiKey() {
@@ -185,7 +211,7 @@ class BusinessLogicProcessor(
             }.onFailure { e ->
                 showError("获取结果失败: ${e.message}")
             }.onSuccess { sentencesData ->
-                sentencesData.updateUI()
+                sentencesMaker.setItems(sentencesData)
             }
         }
     }
@@ -214,7 +240,7 @@ class BusinessLogicProcessor(
                 val fileToSave = fileChooser.showSaveDialog(currentStage)
                 if (fileToSave != null) {
                     try {
-                        fileToSave.writeText(Json.encodeToString(sentencesData))
+                        fileToSave.writeText(Json.Default.encodeToString(sentencesData))
                         showInfo("成功", "结果已保存到 ${fileToSave.absolutePath}")
                     } catch (e: Exception) {
                         showError("保存失败: ${e.message}")
@@ -236,8 +262,10 @@ class BusinessLogicProcessor(
         if (selectedFile != null) {
             try {
                 val content = selectedFile.readText()
-                val sentencesData = Json.decodeFromString<List<Sentence>>(content)
-                sentencesData.updateUI()
+                sentences.clear()
+                sentences.addAll(Json.Default.decodeFromString<List<Sentence>>(content))
+                sentencesMaker.setItems(sentences)
+                uiComponentManager.transcriptSegmentTableView.items = FXCollections.observableArrayList(sentences.flatMap { it.words })
             } catch (e: Exception) {
                 showError("加载结果失败: ${e.message}")
             }
@@ -245,127 +273,135 @@ class BusinessLogicProcessor(
     }
 
     private fun mergeSentences() {
-        val selectedIndex = uiComponentManager.sentenceListView.selectionModel.selectedIndex
+        val selectedIndex = sentencesMaker.selectedIndex
         if (selectedIndex == -1) {
             showWarn("未选择句子", "请先选择一个句子")
             return
         }
         
-        if (selectedIndex >= sentenceToTranscriptSegmentMap.size - 1) {
+        if (selectedIndex >= sentences.size - 1) {
             showWarn("无法合成", "所选句子已是最后一个，无法与下一个句子合成")
             return
         }
         
         // 获取选中句子和下一个句子
-        val currentSentence = sentenceToTranscriptSegmentMap[selectedIndex]
-        val nextSentence = sentenceToTranscriptSegmentMap[selectedIndex + 1]
+        val currentSentence = sentences[selectedIndex]
+        val nextSentence = sentences[selectedIndex + 1]
         
         // 合并转录片段列表
-        val mergedTranscriptSegment = (currentSentence + nextSentence).toMutableList()
+        val mergedTranscriptSegment = (currentSentence.words + nextSentence.words).toMutableList()
         
         // 合并文本
-        val mergedText = if (currentSentence.isNotEmpty() && nextSentence.isNotEmpty()) {
-            "${currentSentence.joinToString(" ") { it.text }} ${nextSentence.joinToString(" ") { it.text }}"
+        val mergedText = if (currentSentence.text.isNotEmpty() && nextSentence.text.isNotEmpty()) {
+            "${currentSentence.words.joinToString(" ") { it.text }} ${nextSentence.words.joinToString(" ") { it.text }}"
         } else {
-            (currentSentence + nextSentence).joinToString(" ") { it.text }
+            (currentSentence.words + nextSentence.words).joinToString(" ") { it.text }
         }
         
         // 更新映射
-        sentenceToTranscriptSegmentMap.removeAt(selectedIndex + 1) // 删除下一个句子
-        sentenceToTranscriptSegmentMap[selectedIndex] = mergedTranscriptSegment // 更新当前句子
+        sentences.removeAt(selectedIndex + 1) // 删除下一个句子
+        sentences[selectedIndex] = Sentence(
+            text = mergedText,
+            words = mergedTranscriptSegment
+        ) // 更新当前句子
         
         // 更新UI
-        uiComponentManager.sentenceListView.items.removeAt(selectedIndex + 1) // 删除下一个句子显示
-        uiComponentManager.sentenceListView.items[selectedIndex] = "文本: $mergedText" // 更新当前句子显示
+        sentencesMaker.getItems().removeAt(selectedIndex + 1) // 删除下一个句子显示
+        sentencesMaker.getItems()[selectedIndex] = sentences[selectedIndex] // 更新当前句子显示
         
         // 更新转录片段表格
-        val transcriptSegments = sentenceToTranscriptSegmentMap.flatMap { it }.toMutableList()
+        val transcriptSegments = sentences.flatMap { it.words }.toMutableList()
         uiComponentManager.transcriptSegmentTableView.items = FXCollections.observableArrayList(transcriptSegments)
     }
-
     private fun splitSentence() {
-        val selectedSentenceIndex = uiComponentManager.sentenceListView.selectionModel.selectedIndex
+        val selectedSentenceIndex = sentencesMaker.selectedIndex
         if (selectedSentenceIndex == -1) {
             showWarn("未选择句子", "请先选择一个句子")
             return
         }
-        
-        if (selectedSentenceIndex >= sentenceToTranscriptSegmentMap.size) {
+
+        if (selectedSentenceIndex >= sentences.size) {
             showWarn("无效选择", "所选句子不存在")
             return
         }
-        
+
         val selectedTranscriptSegmentIndex = uiComponentManager.transcriptSegmentTableView.selectionModel.selectedIndex
         if (selectedTranscriptSegmentIndex == -1) {
             showWarn("未选择转录片段", "请先选择一个转录片段作为分割点")
             return
         }
-        
-        val transcriptSegmentsOfCurrentSentence = sentenceToTranscriptSegmentMap[selectedSentenceIndex]
-        if (transcriptSegmentsOfCurrentSentence.size <= 1) {
+
+        val transcriptSegmentsOfCurrentSentence = sentences[selectedSentenceIndex]
+        if (transcriptSegmentsOfCurrentSentence.words.size <= 1) {
             showWarn("无法分割", "所选句子只包含一个转录片段，无法分割")
             return
         }
-        
+
         val selectedTranscriptSegment = uiComponentManager.transcriptSegmentTableView.items[selectedTranscriptSegmentIndex]
-        val transcriptSegmentIndexInSentence = transcriptSegmentsOfCurrentSentence.indexOf(selectedTranscriptSegment)
-        if (transcriptSegmentIndexInSentence <= 0 || transcriptSegmentIndexInSentence >= transcriptSegmentsOfCurrentSentence.size) {
+        val transcriptSegmentIndexInSentence = transcriptSegmentsOfCurrentSentence.words.indexOf(selectedTranscriptSegment)
+        if (transcriptSegmentIndexInSentence <= 0 || transcriptSegmentIndexInSentence >= transcriptSegmentsOfCurrentSentence.words.size) {
             showWarn("无法分割", "所选转录片段不能用于分割句子")
             return
         }
-        
+
         // 分割转录片段列表
-        val firstHalf = transcriptSegmentsOfCurrentSentence.subList(0, transcriptSegmentIndexInSentence)
-        val lastHalf = transcriptSegmentsOfCurrentSentence.subList(transcriptSegmentIndexInSentence, transcriptSegmentsOfCurrentSentence.size)
-        
-        // 创建新的句子文本
-        val firstHalfText = firstHalf.joinToString(" ") { it.text }
-        val lastHalfText = lastHalf.joinToString(" ") { it.text }
-        
+        val firstHalf = Sentence(
+            text = transcriptSegmentsOfCurrentSentence.words.subList(0, transcriptSegmentIndexInSentence)
+                .joinToString(" ") { it.text },
+            words = transcriptSegmentsOfCurrentSentence.words.subList(0, transcriptSegmentIndexInSentence)
+        )
+        val lastHalf = Sentence(
+            text = transcriptSegmentsOfCurrentSentence.words.subList(
+                transcriptSegmentIndexInSentence,
+                transcriptSegmentsOfCurrentSentence.words.size
+            ).joinToString(" ") { it.text },
+            words = transcriptSegmentsOfCurrentSentence.words.subList(
+                transcriptSegmentIndexInSentence,
+                transcriptSegmentsOfCurrentSentence.words.size
+            )
+        )
+
         // 更新映射
-        sentenceToTranscriptSegmentMap[selectedSentenceIndex] = firstHalf.toList() // 更新当前句子为前半部分
-        sentenceToTranscriptSegmentMap.add(selectedSentenceIndex + 1, lastHalf.toList()) // 在当前位置后插入后半部分
-        
+        sentences[selectedSentenceIndex] = firstHalf // 更新当前句子为前半部分
+        sentences.add(selectedSentenceIndex + 1, lastHalf) // 在当前位置后插入后半部分
+
         // 更新UI
-        uiComponentManager.sentenceListView.items[selectedSentenceIndex] = "文本: $firstHalfText" // 更新当前句子
-        uiComponentManager.sentenceListView.items.add(selectedSentenceIndex + 1, "文本: $lastHalfText") // 添加新句子
-        
+        sentencesMaker.getItems()[selectedSentenceIndex] = firstHalf // 更新当前句子
+        sentencesMaker.getItems().add(selectedSentenceIndex + 1, lastHalf) // 添加新句子
+
         // 更新转录片段表格
-        val transcriptSegmentsData = sentenceToTranscriptSegmentMap.flatMap { it }.toMutableList()
+        val transcriptSegmentsData = sentences.flatMap { it.words }.toMutableList()
         uiComponentManager.transcriptSegmentTableView.items = FXCollections.observableArrayList(transcriptSegmentsData)
     }
-    
     private fun playSelectedSentence() {
         if (uiComponentManager.filePathTextField.text.isEmpty()) {
             showWarn("未选择文件", "请先选择一个文件")
             return
         }
         
-        val selectedSentenceIndex = uiComponentManager.sentenceListView.selectionModel.selectedIndex
+        val selectedSentenceIndex = sentencesMaker.selectedIndex
         if (selectedSentenceIndex == -1) {
             showWarn("未选择句子", "请先选择一个句子")
             return
         }
         Player.play(
             pathToPlay = Path.of(uiComponentManager.filePathTextField.text),
-            startMilliseconds = sentenceToTranscriptSegmentMap[selectedSentenceIndex].first().start,
-            endMilliseconds = sentenceToTranscriptSegmentMap[selectedSentenceIndex].last().end
+            startMilliseconds = sentences[selectedSentenceIndex].words.first().start,
+            endMilliseconds = sentences[selectedSentenceIndex].words.last().end
         )
     }
 
     private fun saveAsSubtitleEvent() {
-        if (sentenceToTranscriptSegmentMap.isEmpty()) {
+        if (sentences.isEmpty()) {
             showWarn("没有句子数据", "请先获取句子列表数据")
             return
         }
         
         val subtitleEvents = mutableListOf<String>()
-        for (i in 0 until sentenceToTranscriptSegmentMap.size) {
-            val transcriptSegmentsOfCurrentSentence = sentenceToTranscriptSegmentMap[i]
-            if (transcriptSegmentsOfCurrentSentence.isEmpty()) continue
-            val textOfSentence = uiComponentManager.sentenceListView.items[i]
-            val realTextOfSentence = textOfSentence.substringAfter("文本: ")
-            subtitleEvents.add(Sentence(text = realTextOfSentence, words = transcriptSegmentsOfCurrentSentence).subtitleEvent().toString())
+        for (i in 0 until sentences.size) {
+            val transcriptSegmentsOfCurrentSentence = sentences[i]
+            if (transcriptSegmentsOfCurrentSentence.words.isEmpty()) continue
+            subtitleEvents.add(sentencesMaker.getItems()[i].toSubtitleEvent().toString())
         }
         
         val fileChooser = FileChooser().apply {
@@ -385,18 +421,6 @@ class BusinessLogicProcessor(
         }
     }
     
-    private fun initializeSentenceListView() {
-        uiComponentManager.sentenceListView.cellFactory = Callback {
-            object : ListCell<String>() {
-                override fun updateItem(item: String?, empty: Boolean) {
-                    super.updateItem(item, empty)
-                    text = if (empty) null else item
-                    if(text.isNullOrEmpty()) return
-                    style = if(text.substringAfter("文本: ").length > 80) "-fx-text-fill: red;" else ""
-                }
-            }
-        }
-    }
 
     private fun initializeTranscriptSegmentTable() {
         uiComponentManager.transcriptSegmentTableView.columns.clear()
@@ -416,13 +440,14 @@ class BusinessLogicProcessor(
                         if (empty || item == null) return
                         val transcriptSegmentIndex = index
                         if (transcriptSegmentIndex < 0 || transcriptSegmentIndex >= uiComponentManager.transcriptSegmentTableView.items.size) return
-                        val currentTranscriptSegment = uiComponentManager.transcriptSegmentTableView.items[transcriptSegmentIndex]
-                        val selectedSentence = uiComponentManager.sentenceListView.selectionModel.selectedItem
+                        val currentTranscriptSegment =
+                            uiComponentManager.transcriptSegmentTableView.items[transcriptSegmentIndex]
+                        val selectedSentence = sentencesMaker.selectedItem
                         if (selectedSentence == null) return
-                        val sentenceIndex = uiComponentManager.sentenceListView.items.indexOf(selectedSentence)
-                        if (sentenceIndex < 0 || sentenceIndex >= sentenceToTranscriptSegmentMap.size) return
-                        val transcriptSegmentsOfSentence = sentenceToTranscriptSegmentMap[sentenceIndex]
-                        if (!transcriptSegmentsOfSentence.contains(currentTranscriptSegment)) return
+                        val sentenceIndex = sentencesMaker.getItems().indexOf(selectedSentence)
+                        if (sentenceIndex < 0 || sentenceIndex >= sentences.size) return
+                        val transcriptSegmentsOfSentence = sentences[sentenceIndex]
+                        if (!transcriptSegmentsOfSentence.words.contains(currentTranscriptSegment)) return
                         style = "-fx-text-fill: red;"
                     }
                 }
@@ -443,37 +468,6 @@ class BusinessLogicProcessor(
             prefWidth = 100.0
             cellValueFactory = PropertyValueFactory<TranscriptSegment, Int>("end")
         })
-    }
-    
-    private fun listenSentenceListSelectionChange() {
-        uiComponentManager.sentenceListView.selectionModel.selectedItemProperty().addListener { _, _, newChoice ->
-            if (newChoice == null) return@addListener
-            
-            val sentenceIndex = uiComponentManager.sentenceListView.items.indexOf(newChoice)
-            if (sentenceIndex < 0 || sentenceIndex >= sentenceToTranscriptSegmentMap.size) return@addListener
-            val transcriptSegmentsOfSentence = sentenceToTranscriptSegmentMap[sentenceIndex]
-            if (transcriptSegmentsOfSentence.isEmpty()) return@addListener
-            val firstTranscriptSegment = transcriptSegmentsOfSentence[0]
-            val transcriptSegmentIndex = uiComponentManager.transcriptSegmentTableView.items.indexOf(firstTranscriptSegment)
-            if (transcriptSegmentIndex < 0) return@addListener
-            uiComponentManager.transcriptSegmentTableView.selectionModel.select(transcriptSegmentIndex)
-            uiComponentManager.transcriptSegmentTableView.scrollTo(transcriptSegmentIndex)
-            uiComponentManager.transcriptSegmentTableView.refresh()
-        }
-    }
-
-    private fun List<Sentence>.updateUI() {
-        uiComponentManager.sentenceListView.items.clear()
-        uiComponentManager.transcriptSegmentTableView.items.clear()
-        sentenceToTranscriptSegmentMap.clear()
-        
-        this.forEach { sentence ->
-            uiComponentManager.sentenceListView.items.add("文本: ${sentence.text}")
-            sentenceToTranscriptSegmentMap.add(sentence.words)
-            
-            val transcribeSegmentData = this.flatMap { it.words }.toMutableList()
-            uiComponentManager.transcriptSegmentTableView.items = FXCollections.observableArrayList(transcribeSegmentData)
-        }
     }
 
     private fun showError(message: String) {

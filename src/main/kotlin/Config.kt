@@ -21,7 +21,7 @@ fun getConfig(): Config {
     return Json.decodeFromString<Config>(configFile.readText())
 }
 
-fun saveConfig(Config: Config) {
+fun saveConfig(config: Config) {
     val configFile = File("config.json")
-    configFile.writeText(Json.encodeToString(Config))
+    configFile.writeText(Json.encodeToString(config))
 }

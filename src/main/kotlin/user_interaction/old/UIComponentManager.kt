@@ -1,7 +1,15 @@
-package org.wiamotit1e
+package org.wiamotit1e.user_interaction.old
 
-import javafx.scene.control.*
-import javafx.scene.layout.*
+import javafx.geometry.Insets
+import javafx.scene.control.Button
+import javafx.scene.control.Label
+import javafx.scene.control.ListView
+import javafx.scene.control.TableView
+import javafx.scene.control.TextField
+import javafx.scene.layout.HBox
+import javafx.scene.layout.VBox
+import org.wiamotit1e.Sentence
+import org.wiamotit1e.TranscriptSegment
 
 /**
  * UI组件管理器 - 管理所有UI组件的创建和初始化
@@ -64,7 +72,7 @@ class UIComponentManager {
         prefWidth = 600.0
     }
     
-    val sentenceListView: ListView<String> = ListView<String>().apply {
+    val sentenceListView: ListView<Sentence> = ListView<Sentence>().apply {
         prefHeight = 200.0
         prefWidth = 600.0
     }
@@ -101,7 +109,7 @@ class UIComponentManager {
             )
         ).apply {
             spacing = 10.0
-            padding = javafx.geometry.Insets(10.0)
+            padding = Insets(10.0)
         }
     }
     
@@ -116,7 +124,7 @@ class UIComponentManager {
             )
         ).apply {
             spacing = 10.0
-            padding = javafx.geometry.Insets(10.0)
+            padding = Insets(10.0)
         }
     }
     
@@ -130,7 +138,7 @@ class UIComponentManager {
             )
         ).apply {
             spacing = 10.0
-            padding = javafx.geometry.Insets(10.0)
+            padding = Insets(10.0)
         }
     }
     
@@ -142,7 +150,8 @@ class UIComponentManager {
             )
         }
         
-        val sentenceOperationButtonBox = HBox(10.0, mergeSentencesButton, splitSentenceButton, playSelectedSentenceButton)
+        val sentenceOperationButtonBox =
+            HBox(10.0, mergeSentencesButton, splitSentenceButton, playSelectedSentenceButton)
         
         return VBox(
             Label("转换查询:"),
@@ -153,7 +162,7 @@ class UIComponentManager {
             HBox(10.0, saveAsSubtitleEventButton)
         ).apply {
             spacing = 10.0
-            padding = javafx.geometry.Insets(10.0)
+            padding = Insets(10.0)
         }
     }
 }

@@ -21,7 +21,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.nio.file.Path
 
-class AssemblyAIService(val apiKey: String) {
+class AssemblyAIService(var apiKey: String) {
     
     private val client = HttpClient(CIO) {
         install(Logging) {

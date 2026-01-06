@@ -11,20 +11,24 @@ object Player {
     
     fun play(pathToPlay: Path, startMilliseconds: Int, endMilliseconds: Int) {
         stop()
-        try {
-            val media = Media(pathToPlay.toUri().toString())
-            val player = MediaPlayer(media)
-            player.startTime = millis(startMilliseconds.toDouble())
-            player.stopTime = millis(endMilliseconds.toDouble())
-            player.play()
-            currentPlayer = player
-        } catch (e: Exception) {
-            e.printStackTrace()
+        val media = Media(pathToPlay.toUri().toString())
+        val player = MediaPlayer(media)
+        
+        player.startTime = millis(startMilliseconds.toDouble())
+        player.stopTime = millis(endMilliseconds.toDouble())
+        player.setOnEndOfMedia {
+            player.dispose()
+            currentPlayer = null
         }
+        player.play()
+        currentPlayer = player
     }
     
     fun stop() {
-        currentPlayer?.stop()
+        currentPlayer?.let { player ->
+            player.stop()
+            player.dispose()
+        }
         currentPlayer = null
     }
 }
