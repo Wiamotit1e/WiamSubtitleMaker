@@ -34,9 +34,21 @@ WiamSubtitleMaker is a powerful intelligent subtitle creation tool that utilizes
 ### Installation Steps
 
 1. Clone or download the project code
-2. Build the project using Gradle
-3. Run the application
-4. Or simply download the release and double-click to run
+2. Ensure Java 21 or higher is installed
+3. Build the project using Gradle:
+   ```bash
+   ./gradlew build
+   ```
+4. Run the application:
+   ```bash
+   ./gradlew run
+   ```
+5. Or package as an executable JAR file:
+   ```bash
+   ./gradlew shadowJar
+   ```
+   Then run the generated JAR file
+6. Or simply download the release and double-click to run
 
 ### Configure API Key
 
@@ -75,24 +87,36 @@ WiamSubtitleMaker is a powerful intelligent subtitle creation tool that utilizes
 
 ```
 WiamSubtitleMaker/
-├── src/main/kotlin/              # Source code directory
-│   ├── AssemblyAIService.kt      # AssemblyAI API service wrapper
-│   ├── BusinessLogicProcessor.kt # Business logic processor
-│   ├── Config.kt                 # Configuration management
-│   ├── JavaFXApplication.kt      # Main application interface
-│   ├── Main.kt                   # Application entry point
-│   ├── Player.kt                 # Player component
-│   ├── Sentence.kt               # Sentence data structure
-│   ├── SubtitleEvent.kt          # Subtitle event data structure
-│   ├── TranscriptSegment.kt      # Transcription segment data structure
-│   ├── UIComponentManager.kt     # UI component manager
-│   └── WTime.kt                  # Time management
-├── build.gradle                  # Gradle build script
-├── config.json                   # API key configuration file
-├── gradlew                       # Gradle wrapper script
-├── gradlew.bat                   # Gradle wrapper batch script
-├── settings.gradle               # Gradle settings
-└── README.md                     # Project documentation
+├── src/main/kotlin/                    # Source code directory
+│   ├── AssemblyAIService.kt            # AssemblyAI API service wrapper
+│   ├── Config.kt                       # Configuration management
+│   ├── Main.kt                         # Application entry point
+│   ├── Player.kt                       # Player component
+│   ├── Sentence.kt                     # Sentence data structure
+│   ├── SubtitleEvent.kt                # Subtitle event data structure
+│   ├── TranscriptSegment.kt            # Transcription segment data structure
+│   ├── WTime.kt                        # Time management
+│   └── user_interaction/               # User interface interaction components
+│       ├── DoForMessage.kt             # Message handling
+│       ├── ListViewGenerator.kt        # List view generator
+│       ├── Message.kt                  # Message type definitions
+│       ├── ResultedButton.kt           # Responsive button
+│       ├── TableViewGenerator.kt       # Table view generator
+│       ├── UIComponentAction.kt        # UI component operations
+│       ├── UIComponentData.kt          # UI component data
+│       └── UIComponentDisplay.kt       # UI component display
+├── src/test/kotlin/
+│   └── Test.kt                         # Test file
+├── build.gradle                        # Gradle build script
+├── config.json                         # API key configuration file
+├── gradlew                             # Gradle wrapper script
+├── gradlew.bat                         # Gradle wrapper batch script
+├── settings.gradle                     # Gradle settings
+├── input/                              # Input files directory
+├── output/                             # Output files directory
+├── readme.md                           # Project documentation(Chinese)
+├── readme_en.md                        # Project documentation(English)
+└── ui.png                              # Interface screenshot
 ```
 
 ## ⚙️ Build Configuration
@@ -114,6 +138,10 @@ This project uses Gradle for build management, main dependencies include:
 ### Confidence Check
 - Transcription segment table displays confidence for each segment
 - Helps evaluate transcription quality
+
+### Subtitle Format Export
+- Supports exporting generated subtitles in Aegisub-compatible format
+- Generates standard subtitle events for easy further editing and use
 
 ## 🔒 Security Notes
 
