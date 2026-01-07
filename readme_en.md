@@ -80,44 +80,7 @@ WiamSubtitleMaker is a powerful intelligent subtitle creation tool that utilizes
 
 1. After editing, click the "Save as Subtitle Event" button
 2. Choose the save location and filename
-3. The system will generate Aegisub subtitle events
-4. Copy to Aegisub for use
-
-## 📁 Project Structure
-
-```
-WiamSubtitleMaker/
-├── src/main/kotlin/                    # Source code directory
-│   ├── AssemblyAIService.kt            # AssemblyAI API service wrapper
-│   ├── Config.kt                       # Configuration management
-│   ├── Main.kt                         # Application entry point
-│   ├── Player.kt                       # Player component
-│   ├── Sentence.kt                     # Sentence data structure
-│   ├── SubtitleEvent.kt                # Subtitle event data structure
-│   ├── TranscriptSegment.kt            # Transcription segment data structure
-│   ├── WTime.kt                        # Time management
-│   └── user_interaction/               # User interface interaction components
-│       ├── DoForMessage.kt             # Message handling
-│       ├── ListViewGenerator.kt        # List view generator
-│       ├── Message.kt                  # Message type definitions
-│       ├── ResultedButton.kt           # Responsive button
-│       ├── TableViewGenerator.kt       # Table view generator
-│       ├── UIComponentAction.kt        # UI component operations
-│       ├── UIComponentData.kt          # UI component data
-│       └── UIComponentDisplay.kt       # UI component display
-├── src/test/kotlin/
-│   └── Test.kt                         # Test file
-├── build.gradle                        # Gradle build script
-├── config.json                         # API key configuration file
-├── gradlew                             # Gradle wrapper script
-├── gradlew.bat                         # Gradle wrapper batch script
-├── settings.gradle                     # Gradle settings
-├── input/                              # Input files directory
-├── output/                             # Output files directory
-├── readme.md                           # Project documentation(Chinese)
-├── readme_en.md                        # Project documentation(English)
-└── ui.png                              # Interface screenshot
-```
+3. The system will generate .ass file
 
 ## ⚙️ Build Configuration
 
