@@ -111,9 +111,9 @@ class UIComponentDisplay(
         textProperty().bindBidirectional(data.filePath)
     }
     
-    val selectFileButton: Button = Button("选择文件").apply {
+    val selectFileButton: Button = ResultedButton("选择文件", onResult = doForMessage).apply {
         text = "选择文件"
-        setOnAction { uiComponentAction.onSelectFileButton() }
+        setResultedOnSuspendAction { uiComponentAction.onSelectFileButton() }
     }
     
     val updateFileButton: Button = ResultedButton(

@@ -23,10 +23,11 @@ class UIComponentAction(
         saveConfig(config = Config(apiKey = data.apiKey.get()))
     }
     
-    fun onSelectFileButton() {
+    fun onSelectFileButton(): Message {
         val file = selectFile("选择文件", listOf("*.*"))
-        if (file == null) return
+        if (file == null) return Message.Success("取消选择")
         data.filePath.set(file.absolutePath)
+        return Message.Success("选择文件成功")
     }
     
     suspend fun onUpdateFileButton(): Message {
