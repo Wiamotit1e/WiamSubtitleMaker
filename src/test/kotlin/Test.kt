@@ -2,8 +2,11 @@ import org.junit.jupiter.api.Test
 import org.wiamotit1e.Sentence
 import org.wiamotit1e.toSentence
 import org.wiamotit1e.TranscriptSegment
+import org.wiamotit1e.WTime
 import org.wiamotit1e.merge
 import org.wiamotit1e.split
+import org.wiamotit1e.AssContentGenerator
+import org.wiamotit1e.SubtitleEvent
 import kotlin.test.assertEquals
 
 class Test {
@@ -85,5 +88,87 @@ class Test {
         assertEquals(listOf(segments[0], segments[1]), third.words)
         assertEquals("I'm your dad!", fourth.text)
         assertEquals(listOf(segments[2], segments[3], segments[4]), fourth.words)
+    }
+
+    @Test
+    fun subtitleEventFormat() {
+        val wtime = WTime(1, 23, 45, 67)
+        val subtitleEvent = SubtitleEvent(
+            layer = 1,
+            start = wtime,
+            end = wtime,
+            style = "Default",
+            name = "TestName",
+            marginL = 10,
+            marginR = 20,
+            marginV = 30,
+            effect = "TestEffect",
+            text = "Test Text"
+        )
+
+        val expected = "Dialogue: 1,1:23:45.67,1:23:45.67,Default,TestName,10,20,30,TestEffect,Test Text"
+        assertEquals(expected, subtitleEvent.format())
+    }
+
+    @Test
+    fun subtitleEventWithDefaults() {
+        val wTime = WTime(0, 0, 10, 0)
+        val subtitleEvent = SubtitleEvent(
+            layer = 0,
+            start = wTime,
+            end = wTime,
+            style = "Default",
+            name = "",
+            marginL = 0,
+            marginR = 0,
+            marginV = 0,
+            effect = "",
+            text = "Default Values Test"
+        )
+
+        val actual = subtitleEvent.format()
+        
+        assertEquals(actual, "Dialogue: 0,0:00:10.00,0:00:10.00,Default,,0,0,0,,Default Values Test")
+    }
+
+    @Test
+    fun assContentGeneratorEmptyList() {
+        val result = AssContentGenerator.generate(emptyList())
+        val expected = "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        assertEquals(expected, result)
+    }
+
+    @Test
+    fun assContentGeneratorWithEvents() {
+        val wTime = WTime(0, 0, 1, 0)
+        val wTime2 = WTime(0, 0, 2, 0)
+        val events = listOf(
+            SubtitleEvent(
+                layer = 0,
+                start = wTime,
+                end = wTime2,
+                style = "Default",
+                text = "Hello World"
+            ),
+            SubtitleEvent(
+                layer = 1,
+                start = wTime2,
+                end = WTime(0, 0, 3, 0),
+                style = "Bold",
+                name = "Speaker1",
+                text = "Second subtitle"
+            )
+        )
+
+        val result = AssContentGenerator.generate(events)
+        
+        val expected = """
+            [Events]
+            Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+            Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello World
+            Dialogue: 1,0:00:02.00,0:00:03.00,Bold,Speaker1,0,0,0,,Second subtitle
+        """.trimIndent()
+        
+        assertEquals(expected, result)
     }
 }

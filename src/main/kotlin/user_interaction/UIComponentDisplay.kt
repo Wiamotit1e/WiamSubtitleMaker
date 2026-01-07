@@ -30,28 +30,24 @@ class UIComponentDisplay(
         selectFile = { description, extensions ->
             val future = CompletableFuture<File?>()
             Platform.runLater {
-                val file = FileChooser().apply {
-                    title = "选择文件"
-                    extensionFilters.addAll(
-                        FileChooser.ExtensionFilter(description, extensions),
-                    )
+                val result = FileChooser().apply {
+                    title = description
+                    extensionFilters.add(FileChooser.ExtensionFilter(description, extensions))
                 }.showOpenDialog(stage)
-                future.complete(file)
+                future.complete(result)
             }
-            future.get()
+            future.get() // 等待结果
         },
         saveFile = { description, extensions ->
             val future = CompletableFuture<File?>()
             Platform.runLater {
-                val file = FileChooser().apply {
-                    title = "保存文件"
-                    extensionFilters.addAll(
-                        FileChooser.ExtensionFilter(description, extensions),
-                    )
+                val result = FileChooser().apply {
+                    title = description
+                    extensionFilters.add(FileChooser.ExtensionFilter(description, extensions))
                 }.showSaveDialog(stage)
-                future.complete(file)
+                future.complete(result)
             }
-            future.get()
+            future.get() // 等待结果
         }
     )
     
@@ -256,7 +252,7 @@ class UIComponentDisplay(
     
     val saveAsSubtitleEventButton: Button = ResultedButton("保存为字幕事件", onResult = doForMessage).apply {
         text = "保存为字幕事件"
-        setResultedOnAction { uiComponentAction.onSaveAsSubtitleEventButton() }
+        setResultedOnSuspendAction { uiComponentAction.onSaveAsSubtitleEventButton() }
     }
     
     fun createApiKeyBox(): VBox {

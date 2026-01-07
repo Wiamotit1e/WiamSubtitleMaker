@@ -143,9 +143,10 @@ class UIComponentAction(
     }
     
     fun onSaveAsSubtitleEventButton(): Message {
-        val file = saveFile("保存为字幕文件", listOf("*.txt"))
+        if (data.sentences.isEmpty()) return Message.Warning("没有句子数据")
+        val file = saveFile("保存为 .ass 文件", listOf("*.ass"))
         if ( file == null) return Message.Success("取消保存")
-        file.runCatching { this.writeText(data.sentences.map { it.toSubtitleEvent() }.joinToString("\n")) }
+        file.runCatching { this.writeText(AssContentGenerator.generate(data.sentences.map { it.toSubtitleEvent() })) }
             .onFailure { return Message.Failure("保存失败") }
          return Message.Info("保存成功")
     }

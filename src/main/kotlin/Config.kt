@@ -7,16 +7,14 @@ import java.io.File
 
 
 @Serializable
-data class Config(val apiKey: String) {
-    companion object{
-        val default = Config("")
-    }
-}
+data class Config(
+    val apiKey: String = ""
+)
 
 fun getConfig(): Config {
     val configFile = File("config.json")
     if (!configFile.exists()) {
-        configFile.writeText(Json.encodeToString(Config.default))
+        configFile.writeText(Json.encodeToString(Config()))
     }
     return Json.decodeFromString<Config>(configFile.readText())
 }

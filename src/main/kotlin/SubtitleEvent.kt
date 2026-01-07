@@ -12,7 +12,7 @@ data class SubtitleEvent(
     val effect: String = "",
     val text: String
 ) {
-    override fun toString(): String {
+    fun format(): String {
         return "Dialogue: $layer,$start,$end,$style,$name,$marginL,$marginR,$marginV,$effect,$text"
     }
 }
